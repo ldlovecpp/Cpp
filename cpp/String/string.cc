@@ -6,9 +6,9 @@ class String
 public:
   //6个基本成员函数
   String()
-    :_ptr(new char)
+    :_ptr(new char[16])
      ,_size(0)
-     ,_capacity(0)
+     ,_capacity(15)
   {
     _ptr[0] = '\0';
   }
@@ -21,11 +21,20 @@ public:
     _ptr[_size]='\0';
   }
   String(const String& s)
+    :_ptr(nullptr)
+     ,_size(0)
+     ,_capacity(0)
   {
-   _ptr=nullptr;
    String tmp(s._ptr);
    Swap(tmp);
   }
+//  String(const String& s)
+//    :_ptr(new char[strlen(s._ptr)])
+//     ,_size(s._size)
+//     ,_capacity(s._capacity)
+//  {
+//    strcpy(_ptr,s._ptr);
+//  }
   String& operator = (String tmp)
   {
     Swap(tmp);
@@ -102,37 +111,36 @@ public:
   {
    if(_size<pos)
      return;
-   if(_size+1==_capacity)
+   if(_size ==_capacity)
    {
      size_t new_capacity = _capacity ==0 ? 15 : 2*_capacity;
      reserve(new_capacity);
    }
-   for(size_t i=_size+1;i>pos;i--)
+   size_t end = _size + 1 ;
+   while(end>pos)
    {
-     _ptr[i] = _ptr[i-1];
+    _ptr[end] = _ptr[end-1];
    }
-   _ptr[pos]=c;
+   _ptr[pos] = c;
    _size++;
   }
   void insert(size_t pos,char* str)
   {
-   if(_size<pos)
-     return;
-   size_t len = strlen(str);
-   if(_size+len>=_capacity)
-   {
-     size_t new_capacity = 2*(_capacity+len);
-     reserve(new_capacity);
-   }
-   for(size_t i = _size+len;i>pos;i--)
-   {
-     _ptr[i] = _ptr[i-len];
-   }
-   for(size_t i=pos;i<pos+len;i++)
-   {
-    _ptr[i] = str[i];
-   }
-   _size+=len;
+    if(pos>_size)
+    {
+      return;
+    }
+    size_t len = strlen(str);
+    size_t end  = _size + len;
+    while(end > pos)
+    {
+      _ptr[end] = _ptr[end-len];
+      end--;
+    }
+    for(int i=0 ;i<len;i++)
+    {
+      _ptr[i+pos] = str[i];
+    }
   }
   void insert(size_t pos,String s)
   {
@@ -166,15 +174,15 @@ public:
     erase(_size-1,1);
   }
   //查
-  int find(char* str)
+  size_t find(char* str)
   {
    if(str==nullptr)
      return -1;
-   for(int i=0;i<_size;i++)
+   for(size_t i=0;i<_size;i++)
    {
       if(_ptr[i]==str[0]) 
       {
-        int j = 0;
+        size_t j = 0;
         for(j=i;j<_size&&j<strlen(str)+i&&str[j-i]==_ptr[j];j++);
         if(j==strlen(str)+i)
           return i;
@@ -182,9 +190,9 @@ public:
    }
    return -1;  
   }
-  int find(char c)
+  size_t find(char c)
   {
-     for(int i=0;i<_size;i++)
+     for(size_t i=0;i<_size;i++)
      {
        if(c==_ptr[i])
        {
@@ -264,8 +272,8 @@ void test3()
 void test()
 {
   String s("luodong");
-  cout <<  s.find("luo") <<endl;;
-  cout << s.find("asdsadasdsa") <<endl;
+  s.insert(0,"wangdingyang");
+  cout << s  <<endl;
 }
 int main()
 {

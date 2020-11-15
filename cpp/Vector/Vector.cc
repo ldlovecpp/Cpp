@@ -1,9 +1,13 @@
 #include<iostream>
-using namespace std;
+using std::cout;
+using std::endl;
+using std::cin;
 namespace MyVector
 {
-   template<class T>
+
+  template<class T>
   class vector{
+  public:
     typedef T* Iterator;
     //构造函数
     vector()
@@ -11,13 +15,7 @@ namespace MyVector
        ,_finish(nullptr)
        ,_endOfStorage(nullptr)
     {}
-    vector(size_t size)
-    {
-      _start= new T[size];
-      _finish  = _start;
-      _endOfStorage = _start + size;
-    }
-    vector(size_t n , const T& val)
+    vector(size_t n , const T& val = T())
     {
       _start  = new T[n];
       _finish = _start+n;
@@ -28,15 +26,27 @@ namespace MyVector
         *p = val;
       }
     }
-   vector(const vector<T>&arr)
+    vector(Iterator left,Iterator right)
     {
-      _start = new T[arr.capacity()];
-      _finish = _start + arr.size();
-      _endOfStorage = _start  + arr.capacity();
-      for(size_t i = 0;i<size();i++)
+      int size =  right - left;
+      resize(size);
+      for(int i =0  ;i< size;i++)
       {
-        _start[i] = arr[i];
+        _start[i] = *left++;
       }
+    }
+    vector(const vector<T>&arr)
+      :_start(nullptr)
+       ,_finish(nullptr)
+       ,_endOfStorage(nullptr)
+    {
+     reserve(arr.capacity());
+     Iterator p = begin();
+     Iterator q  = arr.begin();
+     while(q!=arr.end())
+     {
+       *p++ = *q++;
+     }
     }
     //大小 
     size_t capacity()
@@ -52,6 +62,9 @@ namespace MyVector
     T& operator [](size_t n)
     {
       return _start[n];
+    }
+    T& operator = (const T& val)
+    {
     }
 
     vector<T>& operator = (const vector<T> arr)
@@ -72,7 +85,76 @@ namespace MyVector
     {
       return _finish;
     }
+    
+    //增
+    void reserve()
+    {
+      int oldSize = size();
+      int newSize=size()==0?15:2*oldSize;
+      //开辟空间
+      T* tmp = new T[newSize];
+      //先拷贝之前的数据到新的空间
+      for(size_t i=0;i<oldSize;i++)
+      {
+        tmp[i] = _start[i];
+      }
+      //释放原来的空间
+      delete [] _start;
+      //更新指针
+      _start =  tmp;
+      _finish = _start + oldSize;
+      _endOfStorage = _start + newSize; 
+    }
 
+    void resize(size_t newSize)
+    {
+     while(capacity() <= newSize)
+     {
+       reserve(); 
+     }
+     _finish = _start + newSize;
+    }
+    
+    void insert(size_t  pos,T val)
+    {
+      if(pos>size())
+      {
+        return;
+      }
+      if(_finish==_endOfStorage)
+      {
+         reserve(); 
+      }
+      for(size_t i=size();i>pos;i--)  
+      {
+        _start[i] = _start[i-1];
+      }
+      _start[pos] = val;
+      _finish++;
+    }
+    void push_back(const T& val)
+    {
+       insert(size(),val);
+    }
+    //删
+    void erase()
+    {
+
+    }
+    void pop_back()
+    {
+
+    }
+    //查
+    int find(const T& val)
+    {
+       for(Iterator it = _start ;it< _finish;it++)
+       {
+          if((*it)==val)
+            return it - _start;
+       }
+       return -1;
+    }
     //析构函数
     ~vector()
     {
@@ -84,4 +166,25 @@ namespace MyVector
     T* _finish;
     T* _endOfStorage;
   };
+}
+void print(MyVector::vector<int>arr)
+{
+   for(int i=0;i<arr.size();i++)
+   {
+     std::cout << arr[i] <<std::endl;
+   }
+}
+void test()
+{
+   MyVector::vector<int>arr;
+   arr.push_back(1);
+   arr.push_back(2);
+   arr.push_back(3);
+   arr.push_back(4);
+   arr.push_back(5);
+   print(arr);
+}
+int main()
+{
+  test();
 }
