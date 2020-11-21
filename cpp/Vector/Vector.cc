@@ -1,190 +1,256 @@
 #include<iostream>
-using std::cout;
-using std::endl;
-using std::cin;
-namespace MyVector
+using namespace std;
+namespace LD
 {
-
   template<class T>
-  class vector{
+  class Vector
+  {
   public:
-    typedef T* Iterator;
-    //构造函数
-    vector()
-      :_start(nullptr)
-       ,_finish(nullptr)
-       ,_endOfStorage(nullptr)
-    {}
-    vector(size_t n , const T& val = T())
-    {
-      _start  = new T[n];
-      _finish = _start+n;
-      _endOfStorage = _start + n;
-      Iterator p = begin();
-      while(p!=end())
-      {
-        *p = val;
-      }
-    }
-    vector(Iterator left,Iterator right)
-    {
-      int size =  right - left;
-      resize(size);
-      for(int i =0  ;i< size;i++)
-      {
-        _start[i] = *left++;
-      }
-    }
-    vector(const vector<T>&arr)
-      :_start(nullptr)
-       ,_finish(nullptr)
-       ,_endOfStorage(nullptr)
-    {
-     reserve(arr.capacity());
-     Iterator p = begin();
-     Iterator q  = arr.begin();
-     while(q!=arr.end())
-     {
-       *p++ = *q++;
-     }
-    }
-    //大小 
-    size_t capacity()
-    {
-      return _endOfStorage - _start;
-    }
-    size_t size()
-    {
-      return _finish - _start;
-    }
-
-    //运算符重载 
-    T& operator [](size_t n)
-    {
-      return _start[n];
-    }
-    T& operator = (const T& val)
-    {
-    }
-
-    vector<T>& operator = (const vector<T> arr)
-    {
-      Swap(arr);
-    }
-  
-    void Swap(const vector<T>& arr)
-    {
-      swap(_start,arr.start);
-    }
     //迭代器
-    Iterator begin()
+    typedef T* iterator;
+    typedef const T* const_iterator;
+    iterator begin() const
     {
-     return _start;
+      return _start;
     }
-    Iterator end()
+    iterator end() const
     {
       return _finish;
     }
-    
-    //增
-    void reserve()
+    const_iterator cbegin() const
     {
-      int oldSize = size();
-      int newSize=size()==0?15:2*oldSize;
-      //开辟空间
-      T* tmp = new T[newSize];
-      //先拷贝之前的数据到新的空间
-      for(size_t i=0;i<oldSize;i++)
-      {
-        tmp[i] = _start[i];
-      }
-      //释放原来的空间
-      delete [] _start;
-      //更新指针
-      _start =  tmp;
-      _finish = _start + oldSize;
-      _endOfStorage = _start + newSize; 
+      return _start;
+    }
+    const_iterator cend() const
+    {
+      return _finish;
     }
 
-    void resize(size_t newSize)
+    //容器大小
+    size_t size() const
     {
-     while(capacity() <= newSize)
-     {
-       reserve(); 
-     }
-     _finish = _start + newSize;
+      return _finish - _start;
     }
-    
-    void insert(size_t  pos,T val)
+    size_t capacity() const
     {
-      if(pos>size())
+      return _eos - _start;
+    }
+
+    //支持随机访问
+    T& operator [] (size_t pos) const
+    {
+       return _start[pos];
+    }
+
+    //扩容
+    void reserve(size_t n)
+    {
+       if(n>capacity())
+       {
+         size_t oldSize = size();
+         T* tmp  = new T[n];
+         for(size_t i=0;i<size();i++)
+         {
+           //不可使用memcpy等浅拷贝函数,因为原始数据可能携带资源
+           tmp[i] = _start[i];
+         }
+         if(_start!=nullptr)
+         {
+           delete _start;
+         }
+         _start = tmp;
+         tmp = nullptr;
+         _finish = _start  + oldSize;
+         _eos = _start + n;
+       }
+    }
+    void resize(size_t n ,const T& val = T())
+    {
+      //如果n小于size,将size()缩小即可
+      if(n<size())
       {
+        _finish = _start + n;
         return;
       }
-      if(_finish==_endOfStorage)
+
+      //如果n超过了容器的最大容量,扩容
+      if(n>capacity())
       {
-         reserve(); 
+       reserve(n);
       }
-      for(size_t i=size();i>pos;i--)  
+      //将size扩大到n
+      for(int i = size();i<n;i++)
       {
-        _start[i] = _start[i-1];
+        _start[i] = val;
       }
-      _start[pos] = val;
-      _finish++;
+      //更新_finish位置
+      _finish = _start+n;
     }
+
+
+    //构造函数
+    Vector()
+      :_start(nullptr)
+       ,_finish(nullptr)
+       ,_eos(nullptr)
+    {}
+
+    Vector(size_t n,const T& val = T())
+      :_start(nullptr)
+       ,_finish(nullptr)
+       ,_eos(nullptr)
+    {
+      resize(n,val);
+    }
+
+    //赋值运算符重载
+    Vector<T>& operator = (Vector<T> v)
+    {
+      _start = _finish = _eos = nullptr;
+      Swap(v);
+      return *this;
+    }
+    void Swap(Vector<T>& v)
+    {
+      swap(_start,v._start);
+      swap(_finish,v._finish);
+      swap(_eos,v._eos);
+    }
+    template<class InputIterator>
+    Vector(InputIterator begin,InputIterator end)
+    {
+      reserve(end-begin);
+      while(begin!=end)
+      {
+        push_back(*begin);
+        ++begin;
+      }
+    }
+    Vector(const Vector<T>& v)
+      :_start(nullptr)
+       ,_finish(nullptr)
+       ,_eos(nullptr)
+    {
+     reserve(v.capacity());
+     iterator it = begin();
+     const_iterator vit = v.cbegin();
+     while(vit != v.cend())
+     {
+        *it = *vit;
+        ++vit;
+        ++it;
+     }
+     _finish = _start + v.size();
+    }
+    //增
     void push_back(const T& val)
     {
-       insert(size(),val);
+     insert(end(),val);
+    }
+    void insert(iterator pos,const T& val)
+    {
+      if(pos>=begin() && pos<=end())
+      {
+        if(_finish == _eos)
+        {
+         size_t distance = pos - _start;
+         size_t new_Size = capacity() == 0 ? 15 : 2*capacity();
+         reserve(new_Size);
+         pos = _start + distance;
+        }
+        iterator end = _finish-1;
+        while(end > pos)
+        {
+          *(end+1) = *end;
+          --end;
+        }
+        *pos = val;
+        ++_finish;
+      }
     }
     //删
-    void erase()
-    {
-
-    }
     void pop_back()
     {
-
+      erase(end()-1);
+    }
+    iterator erase(iterator pos)
+    {
+      if(pos>=begin()&&pos<end())
+      {
+        iterator begin = pos+1;
+        while(begin < end())
+        {
+        *(begin -1 )  = *begin;
+         ++begin;
+        }
+        --_finish;
+        return pos;
+      }
+      return end();
     }
     //查
-    int find(const T& val)
+    iterator find(const T& val)
     {
-       for(Iterator it = _start ;it< _finish;it++)
+      for(int i=0;i<size();++i)  
+      {
+        if(val==_start[i])
+        {
+          return _start + i;
+        }
+      }
+      return end();
+    }
+   //重载运算符     
+   bool operator == (const Vector<T>&v)
+   {
+     iterator vidx = v.begin();
+     iterator idx = _start;
+     while(vidx < v._finish && idx < _finish)
+     {
+       if(*vidx != *idx)
        {
-          if((*it)==val)
-            return it - _start;
+        break; 
        }
-       return -1;
-    }
-    //析构函数
-    ~vector()
-    {
-      delete []_start;
-      _start = _finish = _endOfStorage = nullptr;
-    }
-  private:
-    T* _start;
-    T* _finish;
-    T* _endOfStorage;
+       ++vidx;
+       ++idx;
+     }
+     return vidx == v._finish && idx == _finish;
+   }
+   bool operator != (const Vector<T>& v)
+   {
+     return !(*this == v);
+   }
+   private:
+       T* _start;
+       T* _finish;
+       T* _eos;
   };
 }
-void print(MyVector::vector<int>arr)
+void print(LD::Vector<int>&arr)
 {
-   for(int i=0;i<arr.size();i++)
-   {
-     std::cout << arr[i] <<std::endl;
-   }
+  for(auto& a : arr)
+  {
+    cout << a << " ";
+  }
+  cout << endl;
 }
-void test()
+void test1()
 {
-   MyVector::vector<int>arr;
-   arr.push_back(1);
-   arr.push_back(2);
-   arr.push_back(3);
-   arr.push_back(4);
-   arr.push_back(5);
-   print(arr);
+   LD::Vector<int>a; 
+   a.push_back(1);
+   a.push_back(2);
+   a.push_back(3);
+   a.push_back(4);
+   a.push_back(5);
+   cout << a.size() <<endl;
+   LD::Vector<int>b(a);
+   print(b);
+   b.pop_back();
+   b.pop_back();
+   b.pop_back();
+   print(b);
 }
 int main()
 {
-  test();
+   test1();
 }
