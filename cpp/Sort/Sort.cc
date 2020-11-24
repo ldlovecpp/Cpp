@@ -19,7 +19,25 @@ namespace  Sort
             }
           }
      }
-     
+     int Divide2(T* arr,int left,int right)     
+     {
+       T key = arr[left];
+       while(left<right)
+       {
+         while(left < right && arr[right]>=key)
+         {
+           --right;
+         }
+         arr[left] = arr[right];
+         while(left<right&&arr[left]<=key)
+         {
+           left++;
+         }
+         arr[right] = arr[left];
+       }
+       arr[left] = key;
+       return left;
+     }
      int Divide(T* arr,int left,int right)
      {
         int pos = left;
@@ -60,13 +78,13 @@ namespace  Sort
        {
          return;
        }
-       int mid =  Divide(arr,left,right);
+       int mid =  Divide2(arr,left,right);
        QuickSortQ(arr,left,mid-1);
        QuickSortQ(arr,mid+1,right);
      }
      void QuickSort(T* arr,int  len)
      {
-      QuickSortQ2(arr,0,len-1);
+      QuickSortQ(arr,0,len-1);
      }
      void SertSort(int* arr,int len)
      {
@@ -205,7 +223,7 @@ void test()
    int* arr = new int[100];
    getNum(arr,100);
    printArr(arr,100);
-   s.merageSort(arr,100);
+   s.QuickSort(arr,100);
    printArr(arr,100);
    delete []arr;
 }
